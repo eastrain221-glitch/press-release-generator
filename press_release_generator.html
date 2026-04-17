@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>보도자료 생성기</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9f9f7; color: #1a1a1a; min-height: 100vh; padding: 2rem 1rem; }
+.wrapper { max-width: 720px; margin: 0 auto; }
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.subtitle { font-size: 14px; color: #666; margin-bottom: 2rem; }
+.card { background: #fff; border: 1px solid #e8e8e4; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+.options-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+label { font-size: 13px; color: #555; display: block; margin-bottom: 5px; }
+select, input[type="number"] {
+  width: 100%; height: 38px; padding: 0 10px;
+  border: 1px solid #ddd; border-radius: 8px;
+  background: #fff; color: #1a1a1a;
+  font-size: 14px; font-family: inherit;
+}
+select:focus, input:focus { outline: none; border-color: #999; }
+.char-guide { font-size: 12px; color: #999; margin-top: 4px; }
+textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid #ddd; border-radius: 8px;
+  background: #fff; color: #1a1a1a;
+  font-size: 14px; font-family: inherit;
+  line-height: 1.6; resize: vertical; min-height: 200px;
+}
+textarea:focus { outline: none; border-color: #999; }
+.btn {
+  width: 100%; height: 44px;
+  background: #1a1a1a; color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 15px; font-weight: 500; font-family: inherit;
+  cursor: pointer; margin-top: 1rem; transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.85; }
+.result-box { margin-top: 1.5rem; display: none; }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.result-header span { font-size: 13px; color: #666; }
+.btn-copy {
+  font-size: 13px; color: #555;
+  background: none; border: 1px solid #ddd;
+  border-radius: 6px; padding: 4px 12px;
+  cursor: pointer; font-family: inherit;
+}
+.btn-copy:hover { color: #1a1a1a; border-color: #999; }
+.result-content {
+  background: #fff; border: 1px solid #e8e8e4; border-radius: 12px;
+  padding: 1.25rem; font-size: 14px; line-height: 1.8;
+  color: #1a1a1a; white-space: pre-wrap; word-break: break-word;
+}
+.char-count { font-size: 12px; color: #999; text-align: right; margin-top: 6px; }
+.loading { display: flex; align-items: center; gap: 8px; padding: 1.25rem; color: #666; font-size: 14px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #ccc; animation: pulse 1.2s ease-in-out infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+.notice { background: #f0f0ec; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #555; margin-top: 1rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <h1>보도자료 생성기</h1>
+  <p class="subtitle">블루포인트파트너스 브랜드커뮤니케이션팀 스타일로 초안을 자동 생성합니다</p>
+
+  <div class="card">
+    <div class="options-row">
+      <div>
+        <label>보도자료 유형</label>
+        <select id="type" onchange="updateCharGuide()">
+          <option value="투자유치_비공개">투자 유치 (금액 비공개)</option>
+          <option value="투자유치_공개">투자 유치 (금액 공개)</option>
+          <option value="제품·기술·파트너십">제품·기술·파트너십</option>
+          <option value="행사·세미나">행사·세미나</option>
+          <option value="수주·계약">수주·계약</option>
+          <option value="기획·분석·인터뷰">기획·분석·인터뷰</option>
+        </select>
+      </div>
+      <div>
+        <label>목표 글자 수 (공백 제외)</label>
+        <input type="number" id="charCount" value="1200" min="600" max="3000" step="100" />
+        <div class="char-guide" id="charGuide">권장: 1,200자</div>
+      </div>
+    </div>
+
+    <div>
+      <label>소스 자료 붙여넣기</label>
+      <textarea id="sourceText" placeholder="팩트시트, 투심 보고서, 회사 소개, 코멘트 등 어떤 형태든 그대로 붙여넣으세요."></textarea>
+    </div>
+
+    <button class="btn" onclick="generate()">초안 생성 →</button>
+  </div>
+
+  <div class="result-box" id="resultBox">
+    <div class="result-header">
+      <span>생성된 초안</span>
+      <button class="btn-copy" onclick="copyResult()">복사</button>
+    </div>
+    <div class="result-content" id="resultContent"></div>
+    <div class="char-count" id="charCountDisplay"></div>
+  </div>
+
+  <div class="notice" id="notice" style="display:none;">
+    ※ 이 페이지는 Claude.ai 계정이 필요합니다. 생성된 초안은 위 박스에서 확인하세요.
+  </div>
+</div>
+
+<script>
+const charDefaults = {
+  '투자유치_비공개':    { value: 1200, label: '권장: 1,200자' },
+  '투자유치_공개':      { value: 1200, label: '권장: 1,200자' },
+  '제품·기술·파트너십': { value: 1200, label: '권장: 1,200자' },
+  '행사·세미나':        { value: 1200, label: '권장: 1,200자' },
+  '수주·계약':          { value: 1200, label: '권장: 1,200자' },
+  '기획·분석·인터뷰':   { value: 1400, label: '권장: 1,400자 이상' },
+};
+
+function updateCharGuide() {
+  const type = document.getElementById('type').value;
+  const def = charDefaults[type];
+  document.getElementById('charCount').value = def.value;
+  document.getElementById('charGuide').textContent = def.label;
+}
+
+const typeGuide = {
+  '투자유치_비공개': `구조: 리드 → "정확한 투자금과 기업가치는 비공개다" → 문제/솔루션 → 기술 핵심 → 팀 → 사업화/레퍼런스 → 심사역 코멘트 → CEO 코멘트\n코멘트 마무리: 모두 "말했다"`,
+  '투자유치_공개': `구조: 리드(금액·라운드) → 투자자 명단·누적 투자액 → 제품/기술 요약 → 적용 분야 → 계획 → CEO 코멘트\n제목: "'회사 한줄소개' 회사명, OO억원 규모 시리즈X 투자 유치"\n코멘트 마무리: "말했다"`,
+  '제품·기술·파트너십': `구조: 리드 → 배경/맥락 → 핵심 내용 → 차별점·의미 → 코멘트 → 마무리\n코멘트 마무리: "밝혔다"`,
+  '행사·세미나': `구조: 리드 → 날짜·장소·시간·규모 → 배경·기획 의도 → 연사진(소속·이름·주제 순) → 세션 구성 → 참가 신청 → 코멘트\n코멘트 마무리: "밝혔다"`,
+  '수주·계약': `구조: 리드 → 프로젝트 개요 → 핵심 기술·내용 → 의미·전망 → 회사 역량 → CEO 코멘트 → 회사 개요(마지막 2~3문장)\n불렛 → "△" 기호 산문 나열\n코멘트 마무리: "밝혔다"`,
+  '기획·분석·인터뷰': `구조: 리드(핵심 주장·현상) → 배경·맥락 → 주요 논점 전개 → 사례·데이터 → 전망·시사점 → 코멘트\n분량: 1,400자 이상으로 충분히 전개\n코멘트 마무리: "밝혔다" 또는 "말했다"`,
+};
+
+const examples = `
+[예시 1 — 투심 보고서 → 투자유치]
+소스: 투자심사 보고서 / 제목: '멀티로봇 오케스트레이션' 비스캣, 블루포인트에서 시드투자 유치
+패턴: TAM/SAM/SOM·PoC·KPI·SI 등 투심 용어 → 일반어 전환. 리스크·헷지 섹션 삭제. 기술 스펙 → 핵심 2~3개 작동 원리 중심. 영문 제품명 한글 음차 병기. 팀 소개 한 문장. 불렛·표 → 산문. 코멘트: "말했다"
+
+[예시 2 — 투자유치 금액 공개]
+소스: 피처 아티클 / 제목: '초고속 무선통신 반도체' 유니컨, 185억원 규모 시리즈B 투자 유치
+패턴: 금액 제목 노출. 2단락 투자자 명단·누적액. 기술 설명 최소화. 코멘트: 투자 의미·방향 중심. "말했다"
+
+[예시 3 — 투자유치 금액 비공개]
+소스: 팩트시트 / 제목: '용암해수를 랩솔트로'…제주소금, 블루포인트서 시드투자 유치
+패턴: 리드 직후 비공개 문장. 임팩트 키워드 제목 앞으로. 코멘트: "말했다"
+
+[예시 4 — 행사·세미나]
+소스: 보도자료 초안 / 제목: 트루밸류, 교사 300명과 'AI 교실의 해법' 찾는다…다음달 세미나 개최
+패턴: 수치+행위 제목. 날짜·장소 2단락 한 문장. 연사 소속·이름·주제 순. 불렛→산문. 코멘트: "밝혔다"
+
+[예시 5 — 수주·계약]
+소스: LinkedIn 포스팅 / 제목: 시마크로·삼성물산, 국내 첫 오프그리드 그린수소 디지털 트윈 구축
+패턴: 임팩트 키워드 앞으로. 불렛→"△" 산문. 기술 약어 한글 병기. 회사 개요 마지막 2~3문장. 코멘트: "밝혔다"
+
+[예시 6 — 파트너십·기술]
+소스: 보도자료 초안 / 제목: 무빈, 엔비디아 피지컬 AI 휴먼 모델 SOMA 런칭 파트너 선정
+패턴: 영어 고유명사 한글 병기. 차별점 살리되 과장 제거. 추가 정보 안내 한 줄 가능. 코멘트: "밝혔다"
+`;
+
+async function generate() {
+  const source = document.getElementById('sourceText').value.trim();
+  if (!source) { alert('소스 자료를 입력해주세요.'); return; }
+
+  const type = document.getElementById('type').value;
+  const targetChars = document.getElementById('charCount').value;
+  const resultBox = document.getElementById('resultBox');
+  const resultContent = document.getElementById('resultContent');
+
+  resultBox.style.display = 'block';
+  resultContent.innerHTML = '<div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>초안 작성 중...</span></div>';
+
+  const systemPrompt = `당신은 블루포인트파트너스 브랜드커뮤니케이션팀의 보도자료 작성 전문가입니다.
+
+【제목】본문에서 가장 임팩트 있는 키워드를 앞으로. 투자유치_비공개: "키워드…회사명, 블루포인트서 시드투자 유치" / 투자유치_공개: "'한줄소개' 회사명, OO억원 규모 시리즈X 투자 유치" / 그 외: "주어·파트너, 핵심행위 명사형"
+
+【유형별 구조】${typeGuide[type]}
+
+【소스 형태별】투심 보고서: 리스크·헷지·TAM/SAM/SOM 삭제, 투심 용어 일반어 전환, 기술 스펙→핵심만 재서술 / 피처 아티클: 투자 팩트 중심 재구성 / SNS: 감성 문구 제거 / 보도자료 초안: 과장·중복 제거
+
+【한글 병기】고유명사·약어·제품명 첫 등장 시 한글(영문) 병기, 이후 한글만
+【블루포인트】본문 첫 등장만 "블루포인트파트너스", 이후·제목은 "블루포인트"
+【투자금】공개 명시 없으면 비공개. 리드 직후 "정확한 투자금과 기업가치는 비공개다" 삽입
+【날짜】"0일 밝혔다" (빈칸)
+【문체】직접적·사실 중심. 홍보성 수식어 제거. 불렛·표→산문 또는 "△" 나열. 단락마다 핵심 메시지 하나.
+【분량】목표 글자 수(공백 제외) ${targetChars}자 내외에 맞게 압축
+
+${examples}
+
+헤드라인 포함, 개요표 제외, 배포일 빈칸.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: source }]
+      })
+    });
+
+    if (!res.ok) throw new Error('API 오류');
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '결과를 가져오지 못했습니다.';
+    resultContent.textContent = text;
+    const count = text.replace(/\s/g, '').length;
+    document.getElementById('charCountDisplay').textContent = `공백 제외 ${count.toLocaleString()}자`;
+  } catch(e) {
+    resultContent.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+  }
+}
+
+function copyResult() {
+  const text = document.getElementById('resultContent').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent = '복사됨';
+    setTimeout(() => btn.textContent = '복사', 1500);
+  });
+}
+</script>
+</body>
+</html>
