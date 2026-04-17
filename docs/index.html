@@ -192,9 +192,9 @@ ${examples}
 헤드라인 포함, 개요표 제외, 배포일 빈칸.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': 'sk-ant-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', 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1500,
