@@ -10,6 +10,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .wrapper { max-width: 720px; margin: 0 auto; }
 .logo-wrap { text-align: center; margin-bottom: 2rem; }
 .logo-wrap img { height: 28px; opacity: 0.9; }
+.missing { color: #e53e3e; }
 h1 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
 .subtitle { font-size: 14px; color: #666; margin-bottom: 2rem; }
 .card { background: #fff; border: 1px solid #e8e8e4; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
@@ -65,7 +66,7 @@ textarea:focus { outline: none; border-color: #999; }
 <body>
 <div class="wrapper">
   <div class="logo-wrap">
-    <img src="Bluepoint_Basic.png" alt="Bluepoint Partners" />
+    <img src="/Bluepoint_Basic.png" alt="Bluepoint Partners" />
   </div>
   <h1>보도자료 생성기</h1>
   <p class="subtitle">블루포인트파트너스 브랜드커뮤니케이션팀 스타일로 초안을 자동 생성합니다</p>
@@ -128,10 +129,10 @@ function updateCharGuide() {
 const typeGuide = {
   '투자유치_비공개': '구조: 리드 → "정확한 투자금과 기업가치는 비공개다" → 문제/솔루션 → 기술 핵심 → 팀 → 사업화/레퍼런스 → 심사역 코멘트 → CEO 코멘트\n코멘트 마무리: 모두 "말했다"',
   '투자유치_공개': '구조: 리드(금액·라운드) → 투자자 명단·누적 투자액 → 제품/기술 요약 → 적용 분야 → 계획 → CEO 코멘트\n제목: "\'회사 한줄소개\' 회사명, OO억원 규모 시리즈X 투자 유치"\n코멘트 마무리: "말했다"',
-  '제품·기술·파트너십': '구조: 리드 → 배경/맥락 → 핵심 내용 → 차별점·의미 → 코멘트 → 마무리\n코멘트 마무리: "밝혔다"',
-  '행사·세미나': '구조: 리드 → 날짜·장소·시간·규모 → 배경·기획 의도 → 연사진(소속·이름·주제 순) → 세션 구성 → 참가 신청 → 코멘트\n코멘트 마무리: "밝혔다"',
-  '수주·계약': '구조: 리드 → 프로젝트 개요 → 핵심 기술·내용 → 의미·전망 → 회사 역량 → CEO 코멘트 → 회사 개요(마지막 2~3문장)\n불렛 → "△" 기호 산문 나열\n코멘트 마무리: "밝혔다"',
-  '기획·분석·인터뷰': '구조: 리드(핵심 주장·현상) → 배경·맥락 → 주요 논점 전개 → 사례·데이터 → 전망·시사점 → 코멘트\n분량: 1,400자 이상으로 충분히 전개\n코멘트 마무리: "밝혔다" 또는 "말했다"',
+  '제품·기술·파트너십': '구조: 리드 → 배경/맥락 → 핵심 내용 → 차별점·의미 → 코멘트 → 마무리\n코멘트 마무리: "말했다" 기본, 반복 시 "설명했다"/"덧붙였다" 변주',
+  '행사·세미나': '구조: 리드 → 날짜·장소·시간·규모 → 배경·기획 의도 → 연사진(소속·이름·주제 순) → 세션 구성 → 참가 신청 → 코멘트\n코멘트 마무리: "말했다" 기본, 반복 시 "설명했다"/"덧붙였다" 변주',
+  '수주·계약': '구조: 리드 → 프로젝트 개요 → 핵심 기술·내용 → 의미·전망 → 회사 역량 → CEO 코멘트 → 회사 개요(마지막 2~3문장)\n불렛 → "△" 기호 산문 나열\n코멘트 마무리: "말했다" 기본, 반복 시 "설명했다"/"덧붙였다" 변주',
+  '기획·분석·인터뷰': '구조: 리드(핵심 주장·현상) → 배경·맥락 → 주요 논점 전개 → 사례·데이터 → 전망·시사점 → 코멘트\n분량: 1,400자 이상으로 충분히 전개\n코멘트 마무리: "말했다" 기본, 반복 시 "설명했다"/"덧붙였다"/"강조했다" 변주',
 };
 
 const examples = `
@@ -183,7 +184,9 @@ async function generate() {
 【한글 병기】고유명사·약어·제품명 첫 등장 시 한글(영문) 병기, 이후 한글만
 【블루포인트】본문 첫 등장만 "블루포인트파트너스", 이후·제목은 "블루포인트"
 【투자금】공개 명시 없으면 비공개. 리드 직후 "정확한 투자금과 기업가치는 비공개다" 삽입
+【부족한 자료 처리】소스 자료가 턱없이 부족하거나 특정 정보가 없어도 기본 틀은 반드시 완성할 것. 단, 정보가 부족한 부분은 삭제하지 말고 (○○ 정보 필요) 형식으로 표시. 예: (대표이사 이름 필요), (심사역 코멘트 필요), (설립 연도 필요), (핵심 기술 설명 필요). 빈칸으로 두거나 임의로 지어내지 말 것.
 【날짜】"0일 밝혔다" (빈칸)
+【동사 원칙】"밝혔다"는 리드 문장의 명백한 팩트(투자 유치, 행사 개최 등)에만 사용. 코멘트 마무리 기본값은 "말했다". "말했다"가 반복되면 맥락에 맞게 "설명했다", "덧붙였다", "강조했다" 등으로 변주. 코멘트에 "밝혔다" 사용 금지.
 【문체】직접적·사실 중심. 홍보성 수식어 제거. 불렛·표→산문 또는 "△" 나열. 단락마다 핵심 메시지 하나.
 【분량】목표 글자 수(공백 제외) ${targetChars}자 내외에 맞게 압축
 
@@ -205,9 +208,16 @@ ${examples}
 
     if (!res.ok) throw new Error('API 오류');
     const data = await res.json();
-    const text = data.content?.[0]?.text || '결과를 가져오지 못했습니다.';
-    resultContent.textContent = text;
-    const count = text.replace(/\s/g, '').length;
+    const raw = data.content?.[0]?.text || '결과를 가져오지 못했습니다.';
+
+    // (필요한 정보) 패턴을 빨간 글씨로 렌더링
+    const html = raw
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>')
+      .replace(/\(([^)]*필요[^)]*)\)/g, '<span class="missing">($1)</span>');
+    resultContent.innerHTML = html;
+
+    const count = raw.replace(/\s/g, '').length;
     document.getElementById('charCountDisplay').textContent = `공백 제외 ${count.toLocaleString()}자`;
   } catch(e) {
     resultContent.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
@@ -215,7 +225,7 @@ ${examples}
 }
 
 function copyResult() {
-  const text = document.getElementById('resultContent').textContent;
+  const text = resultContent.innerText;
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.querySelector('.btn-copy');
     btn.textContent = '복사됨';
